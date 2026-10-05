@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>马股实时行情看板</title>
+  <title>馬股核心觀察倉</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       background-color: #0b1120;
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
       padding: 16px;
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
     header {
@@ -22,172 +26,139 @@
       padding-bottom: 12px;
       border-bottom: 1px solid #1e293b;
     }
-    h1 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; }
-    .status-tag {
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .badge {
       font-size: 0.75rem;
       background: #1e293b;
       padding: 4px 10px;
       border-radius: 9999px;
-      color: #94a3b8;
+      color: #22c55e;
+      border: 1px solid #334155;
     }
-    .stock-grid {
+    .widget-wrapper {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      background: #131d31;
+      padding: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .legend-list {
+      margin-top: 18px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
-    .card {
+    .legend-item {
       background: #131d31;
       border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 10px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
     }
-    .stock-info .name {
-      font-size: 1.05rem;
+    .legend-title {
       font-weight: 600;
-      color: #f1f5f9;
+      font-size: 0.95rem;
+      color: #e2e8f0;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .code-badge {
+    .code-pill {
       background: #0284c7;
       color: #fff;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 4px;
       font-weight: bold;
     }
-    .stock-info .category {
+    .legend-desc {
       font-size: 0.8rem;
-      color: #64748b;
-      margin-top: 4px;
+      color: #94a3b8;
     }
-    .stock-price {
-      text-align: right;
-    }
-    .price-value {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #f8fafc;
-      letter-spacing: -0.5px;
-    }
-    .change-badge {
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 6px;
-    }
-    .up { color: #22c55e; background: rgba(34, 197, 94, 0.15); }
-    .down { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
-    .flat { color: #94a3b8; background: rgba(148, 163, 184, 0.15); }
     .footer {
       margin-top: 24px;
       text-align: center;
       font-size: 0.75rem;
-      color: #475569;
+      color: #64748b;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>马股核心观察仓</h1>
-    <span class="status-tag" id="last-update">数据加载中...</span>
+    <h1>馬股核心觀察倉</h1>
+    <span class="badge">● 連線正常</span>
   </header>
 
-  <div class="stock-grid" id="stockList">
-    <!-- 股票列表动态渲染 -->
+  <!-- 官方即時報價卡片元件 -->
+  <div class="widget-wrapper">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
+      {
+        "symbols": [
+          {
+            "proName": "MYX:TOPGLOV",
+            "title": "7113 頂級手套"
+          },
+          {
+            "proName": "MYX:TANCO",
+            "title": "2429 丹斯里陳志成機構"
+          },
+          {
+            "proName": "MYX:PBBANK",
+            "title": "1295 大眾銀行"
+          },
+          {
+            "proName": "MYX:GENTING",
+            "title": "3182 雲頂"
+          },
+          {
+            "proName": "MYX:GENM",
+            "title": "4715 雲頂大馬"
+          }
+        ],
+        "isTransparent": true,
+        "showSymbolLogo": true,
+        "colorTheme": "dark",
+        "locale": "zh_TW"
+      }
+      </script>
+    </div>
   </div>
 
-  <div class="footer">每 30 秒自动刷新 | 数据源：马交所实时聚合</div>
+  <!-- 股票中文備註與行業分類 -->
+  <div class="legend-list">
+    <div class="legend-item">
+      <div class="legend-title"><span class="code-pill">7113</span> 頂級手套 (TOPGLOV)</div>
+      <div class="legend-desc">醫療保健 · 手套製造</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-title"><span class="code-pill">2429</span> 丹斯里陳志成機構 (TANCO)</div>
+      <div class="legend-desc">產業發展 · 港口基建</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-title"><span class="code-pill">1295</span> 大眾銀行 (PBBANK)</div>
+      <div class="legend-desc">金融服務 · 商業銀行</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-title"><span class="code-pill">3182</span> 雲頂 (GENTING)</div>
+      <div class="legend-desc">綜合控股 · 全球娛樂</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-title"><span class="code-pill">4715</span> 雲頂大馬 (GENM)</div>
+      <div class="legend-desc">休閒娛樂 · 賭場度假村</div>
+    </div>
+  </div>
 
-  <script>
-    const STOCKS = [
-      { code: "7113", ticker: "7113.KL", name: "顶级手套 (TOPGLOV)", desc: "医疗保健 · 橡胶手套" },
-      { code: "2429", ticker: "2429.KL", name: "丹斯里陈志成机构 (TANCO)", desc: "房地产与基建开发" },
-      { code: "1295", ticker: "1295.KL", name: "大众银行 (PBBANK)", desc: "金融服务 · 商业银行" },
-      { code: "3182", ticker: "3182.KL", name: "云顶 (GENTING)", desc: "综合控股 · 休闲娱乐" },
-      { code: "4715", ticker: "4715.KL", name: "云顶大马 (GENM)", desc: "旅游度假村 · 赌场与酒店" }
-    ];
+  <div class="footer">TradingView 官方數據直連 | 全華文支援</div>
 
-    async function fetchQuote(ticker) {
-      try {
-        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-        const wrapper = await res.json();
-        const data = JSON.parse(wrapper.contents);
-        const meta = data.chart.result[0].meta;
-        
-        const price = meta.regularMarketPrice ?? 0;
-        const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-        const diff = price - prevClose;
-        const percent = prevClose !== 0 ? (diff / prevClose) * 100 : 0;
-
-        return {
-          price: price.toFixed(3),
-          diff: diff.toFixed(3),
-          percent: percent.toFixed(2),
-          isUp: diff > 0,
-          isFlat: diff === 0
-        };
-      } catch (err) {
-        console.error("加载失败: " + ticker, err);
-        return null;
-      }
-    }
-
-    async function updateQuotes() {
-      const container = document.getElementById("stockList");
-      
-      const promises = STOCKS.map(async (item) => {
-        const quote = await fetchQuote(item.ticker);
-        return { ...item, quote };
-      });
-
-      const results = await Promise.all(promises);
-      container.innerHTML = "";
-
-      results.forEach(stock => {
-        const q = stock.quote;
-        const isUp = q ? q.isUp : false;
-        const isFlat = q ? q.isFlat : true;
-        
-        const changeClass = isFlat ? 'flat' : (isUp ? 'up' : 'down');
-        const sign = isFlat ? '' : (isUp ? '+' : '');
-        const priceText = q ? `RM ${q.price}` : "--";
-        const changeText = q ? `${sign}${q.diff} (${sign}${q.percent}%)` : "获取中";
-
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="stock-info">
-            <div class="name">
-              <span class="code-badge">${stock.code}</span>
-              ${stock.name}
-            </div>
-            <div class="category">${stock.desc}</div>
-          </div>
-          <div class="stock-price">
-            <div class="price-value">${priceText}</div>
-            <div class="change-badge ${changeClass}">${changeText}</div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
-      document.getElementById("last-update").innerText = `最后更新：${timeStr}`;
-    }
-
-    updateQuotes();
-    setInterval(updateQuotes, 30000);
-  </script>
 </body>
 </html>
