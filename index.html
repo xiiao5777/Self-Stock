@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>馬股核心即時觀察倉</title>
+  <!-- 改成你的 Worker 域名：提前握手，首个请求更快 -->
+  <link rel="preconnect" href="https://self-stock.loveayame5777.workers.dev/" crossorigin />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -22,16 +24,8 @@
       padding-bottom: 12px;
       border-bottom: 2px solid #e2e8f0;
     }
-    h1 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #0f172a;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    h1 { font-size: 1.25rem; font-weight: 800; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
     .status-badge {
       font-size: 0.72rem;
       background: #e2e8f0;
@@ -42,7 +36,7 @@
     }
     .refresh-btn {
       background: #0284c7;
-      color: #ffffff;
+      color: #fff;
       border: none;
       font-size: 0.75rem;
       padding: 4px 10px;
@@ -50,16 +44,11 @@
       cursor: pointer;
       font-weight: 700;
     }
-    .refresh-btn:active {
-      background: #0369a1;
-    }
-    .stock-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .refresh-btn:active { background: #0369a1; }
+    .refresh-btn:disabled { opacity: 0.6; cursor: default; }
+    .stock-list { display: flex; flex-direction: column; gap: 12px; }
     .stock-card {
-      background: #ffffff;
+      background: #fff;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       padding: 16px;
@@ -71,7 +60,6 @@
     .stock-info .name {
       font-size: 1.05rem;
       font-weight: 700;
-      color: #0f172a;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -84,20 +72,9 @@
       border-radius: 6px;
       font-weight: 800;
     }
-    .stock-info .desc {
-      font-size: 0.8rem;
-      color: #64748b;
-      margin-top: 4px;
-    }
-    .stock-price {
-      text-align: right;
-    }
-    .price-value {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: #0f172a;
-      letter-spacing: -0.5px;
-    }
+    .stock-info .desc { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+    .stock-price { text-align: right; }
+    .price-value { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
     .change-badge {
       display: inline-block;
       margin-top: 4px;
@@ -109,12 +86,7 @@
     .up { color: #15803d; background: #dcfce7; }
     .down { color: #b91c1c; background: #fee2e2; }
     .flat { color: #64748b; background: #f1f5f9; }
-    .footer {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 0.75rem;
-      color: #94a3b8;
-    }
+    .footer { margin-top: 24px; text-align: center; font-size: 0.75rem; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -122,18 +94,23 @@
   <header>
     <h1>馬股核心觀察倉</h1>
     <div class="header-right">
-      <span class="status-badge" id="last-update">正在同步...</span>
-      <button class="refresh-btn" onclick="fetchLiveQuotes()">刷新</button>
+      <span class="status-badge" id="last-update">載入中...</span>
+      <button class="refresh-btn" id="refreshBtn">刷新</button>
     </div>
   </header>
 
-  <div class="stock-list" id="stockList">
-    <!-- 股票列表 -->
-  </div>
+  <div class="stock-list" id="stockList"></div>
 
-  <div class="footer">每 30 秒自動刷新 · 白底即時看板</div>
+  <div class="footer">開市時每 30 秒刷新 · 收市後每 5 分鐘 · 數據來自 Yahoo（有延遲）</div>
 
   <script>
+    // ===== 配置 =====
+    const WORKER_URL = "https://self-stock.loveayame5777.workers.dev/quotes"; // 部署 Worker 后改这里
+    const FALLBACK_PROXY = "https://api.allorigins.win/raw?url=";               // Worker 未配置/挂掉时的备用
+    const CACHE_KEY = "bursa_quotes_v1";
+    const REFRESH_OPEN_MS = 30000;
+    const REFRESH_CLOSED_MS = 300000;
+
     const STOCKS = [
       { code: "7113", ticker: "7113.KL", name: "頂級手套", desc: "TOPGLOV · 橡膠手套" },
       { code: "2429", ticker: "2429.KL", name: "丹斯里陳志成機構", desc: "TANCO · 房產基建" },
@@ -142,84 +119,168 @@
       { code: "4715", ticker: "4715.KL", name: "雲頂大馬", desc: "GENM · 賭場度假村" }
     ];
 
-    async function fetchLiveQuotes() {
-      const statusBadge = document.getElementById("last-update");
-      statusBadge.innerText = "更新中...";
+    const $list = document.getElementById("stockList");
+    const $status = document.getElementById("last-update");
+    const $btn = document.getElementById("refreshBtn");
+    const cardEls = {};
+    let timer = null;
+    let inFlight = false;
+    let lastTs = 0;
 
-      const symbols = STOCKS.map(s => s.ticker).join(",");
-      // 免費高可用開放接口
-      const apiUrl = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=" + encodeURIComponent(symbols);
-      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(apiUrl);
-
-      try {
-        const res = await fetch(proxyUrl);
-        const data = await res.json();
-        const quotes = data.quoteResponse ? data.quoteResponse.result : [];
-
-        const quoteMap = {};
-        quotes.forEach(q => {
-          quoteMap[q.symbol] = {
-            price: q.regularMarketPrice,
-            diff: q.regularMarketChange,
-            percent: q.regularMarketChangePercent
-          };
-        });
-
-        renderStocks(quoteMap);
-
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('zh-MY', { hour12: false });
-        statusBadge.innerText = "已更新 " + timeStr;
-      } catch (err) {
-        console.error("載入失敗", err);
-        statusBadge.innerText = "連線延遲，點擊重試";
-      }
-    }
-
-    function renderStocks(quoteMap) {
-      const container = document.getElementById("stockList");
-      container.innerHTML = "";
-
-      STOCKS.forEach(stock => {
-        const q = quoteMap[stock.ticker];
-        let priceStr = "--";
-        let changeStr = "--";
-        let changeClass = "flat";
-
-        if (q && q.price !== undefined) {
-          const price = Number(q.price).toFixed(3);
-          const diff = Number(q.diff).toFixed(3);
-          const percent = Number(q.percent).toFixed(2);
-          const isUp = q.diff > 0;
-          const isFlat = q.diff === 0;
-
-          priceStr = "RM " + price;
-          const sign = isFlat ? "" : (isUp ? "+" : "");
-          changeStr = sign + diff + " (" + sign + percent + "%)";
-          changeClass = isFlat ? "flat" : (isUp ? "up" : "down");
-        }
-
+    // 1) 不等网络，立即画出卡片骨架
+    function buildCards() {
+      const frag = document.createDocumentFragment();
+      STOCKS.forEach(s => {
         const card = document.createElement("div");
         card.className = "stock-card";
         card.innerHTML = `
           <div class="stock-info">
-            <div class="name">
-              <span class="code-pill">${stock.code}</span>
-              ${stock.name}
-            </div>
-            <div class="desc">${stock.desc}</div>
+            <div class="name"><span class="code-pill">${s.code}</span>${s.name}</div>
+            <div class="desc">${s.desc}</div>
           </div>
           <div class="stock-price">
-            <div class="price-value">${priceStr}</div>
-            <div class="change-badge ${changeClass}">${changeStr}</div>
-          </div>
-        `;
-        container.appendChild(card);
+            <div class="price-value">--</div>
+            <div class="change-badge flat">--</div>
+          </div>`;
+        cardEls[s.ticker] = {
+          price: card.querySelector(".price-value"),
+          change: card.querySelector(".change-badge")
+        };
+        frag.appendChild(card);
+      });
+      $list.appendChild(frag);
+    }
+
+    // 2) 只更新数字，不重建 DOM
+    function render(quotes) {
+      STOCKS.forEach(s => {
+        const q = quotes[s.ticker];
+        if (!q || q.price == null) return; // 没拿到就保留旧值
+        const el = cardEls[s.ticker];
+        const c = Math.round(q.change * 1000) / 1000;
+        const sign = c > 0 ? "+" : "";
+        el.price.textContent = "RM " + Number(q.price).toFixed(3);
+        el.change.textContent = `${sign}${c.toFixed(3)} (${sign}${Number(q.pct).toFixed(2)}%)`;
+        el.change.className = "change-badge " + (c > 0 ? "up" : c < 0 ? "down" : "flat");
       });
     }
 
-    fetchLiveQuotes();
-    setInterval(fetchLiveQuotes, 30000);
+    // ===== 本地缓存：打开页面瞬间显示上次数据 =====
+    function loadCache() {
+      try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch { return null; }
+    }
+    function saveCache(quotes) {
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), quotes })); } catch {}
+    }
+
+    function fmtTime(ts) {
+      const d = new Date(ts);
+      return d.toDateString() === new Date().toDateString()
+        ? d.toLocaleTimeString("zh-MY", { hour12: false })
+        : d.toLocaleString("zh-MY", { hour12: false, month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    // ===== 网络 =====
+    async function fetchJSON(url, ms) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), ms);
+      try {
+        const r = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return await r.json();
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    function parseChart(json) {
+      const m = json?.chart?.result?.[0]?.meta;
+      if (!m || m.regularMarketPrice == null) return null;
+      const prev = m.previousClose ?? m.chartPreviousClose;
+      const change = prev ? m.regularMarketPrice - prev : 0;
+      return { price: m.regularMarketPrice, change, pct: prev ? (change / prev) * 100 : 0 };
+    }
+
+    async function getQuotes() {
+      const symbols = STOCKS.map(s => s.ticker).join(",");
+
+      // 主线路：自己的 Worker，一次请求拿全部
+      if (!WORKER_URL.includes("YOUR-")) {
+        try {
+          const j = await fetchJSON(`${WORKER_URL}?symbols=${encodeURIComponent(symbols)}`, 6000);
+          if (j.quotes && Object.keys(j.quotes).length) return j.quotes;
+        } catch (e) {
+          console.warn("Worker 失败，改用备用代理", e);
+        }
+      }
+
+      // 备用：公共代理 + Yahoo v8 chart（并发）
+      const out = {};
+      await Promise.all(STOCKS.map(async s => {
+        try {
+          const api = `https://query1.finance.yahoo.com/v8/finance/chart/${s.ticker}?range=1d&interval=1d`;
+          const q = parseChart(await fetchJSON(FALLBACK_PROXY + encodeURIComponent(api), 8000));
+          if (q) out[s.ticker] = q;
+        } catch {}
+      }));
+      return out;
+    }
+
+    async function refresh() {
+      if (inFlight) return;
+      inFlight = true;
+      $btn.disabled = true;
+      $status.textContent = "更新中...";
+      try {
+        const quotes = await getQuotes();
+        if (Object.keys(quotes).length) {
+          render(quotes);
+          saveCache(quotes);
+          lastTs = Date.now();
+          $status.textContent = "已更新 " + fmtTime(lastTs);
+        } else {
+          $status.textContent = lastTs ? "連線失敗 · 顯示 " + fmtTime(lastTs) : "連線失敗，點擊重試";
+        }
+      } finally {
+        inFlight = false;
+        $btn.disabled = false;
+      }
+    }
+
+    // ===== 调度：只在开市时高频刷新，后台标签页暂停 =====
+    function isBursaOpen() {
+      const myt = new Date(Date.now() + 8 * 3600 * 1000); // 转成马来西亚时间（用 UTC 字段读）
+      const day = myt.getUTCDay();
+      if (day === 0 || day === 6) return false;
+      const min = myt.getUTCHours() * 60 + myt.getUTCMinutes();
+      // 9:00–12:45、14:30–17:20（多留几分钟给数据延迟）
+      return (min >= 540 && min <= 765) || (min >= 870 && min <= 1040);
+    }
+
+    function schedule() {
+      clearTimeout(timer);
+      if (document.hidden) return;
+      timer = setTimeout(async () => {
+        await refresh();
+        schedule();
+      }, isBursaOpen() ? REFRESH_OPEN_MS : REFRESH_CLOSED_MS);
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) clearTimeout(timer);
+      else refresh().then(schedule);
+    });
+    $btn.addEventListener("click", () => refresh().then(schedule));
+
+    // ===== 启动 =====
+    buildCards();
+    const cached = loadCache();
+    if (cached?.quotes) {
+      render(cached.quotes);
+      lastTs = cached.ts;
+      $status.textContent = "緩存 " + fmtTime(cached.ts);
+    }
+    refresh().then(schedule);
   </script>
 </body>
 </html>
