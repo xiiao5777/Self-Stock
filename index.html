@@ -1,548 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-MY">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#090d16" />
-  <meta name="description" content="Live Bursa Malaysia Watchlist for 7113, 2429, 1295, 3182, 4715" />
-  <title>KLSE Live Dashboard</title>
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              dark: '#080c14',
-              card: '#0f172a',
-              cardBorder: '#1e293b',
-              accent: '#38bdf8',
-              green: '#22c55e',
-              red: '#ef4444'
-            }
-          }
-        }
-      }
-    };
-  </script>
-
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
+  <title>马股实时行情看板</title>
   <style>
-    /* Mobile-first polish & scrollbars */
-    * {
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #080c14;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0b1120;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      height: 4px;
-      width: 4px;
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #334155;
+    h1 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; }
+    .status-tag {
+      font-size: 0.75rem;
+      background: #1e293b;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      color: #94a3b8;
+    }
+    .stock-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: #131d31;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+    .stock-info .name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .code-badge {
+      background: #0284c7;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 6px;
       border-radius: 4px;
+      font-weight: bold;
     }
-    .tradingview-widget-container iframe {
-      border-radius: 0.75rem !important;
+    .stock-info .category {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .stock-price {
+      text-align: right;
+    }
+    .price-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.5px;
+    }
+    .change-badge {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .up { color: #22c55e; background: rgba(34, 197, 94, 0.15); }
+    .down { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
+    .flat { color: #94a3b8; background: rgba(148, 163, 184, 0.15); }
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #475569;
     }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen flex flex-col justify-between pb-20 select-none">
+<body>
 
-  <!-- Header / Status Bar -->
-  <header class="sticky top-0 z-50 bg-[#080c14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-          <i data-lucide="trending-up" class="w-4 h-4"></i>
-        </div>
-        <div>
-          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-            KLSE Live Monitor
-            <span class="text-[10px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">MYX</span>
-          </h1>
-          <p class="text-[11px] text-slate-400">Top Glove • Tanco • Public Bank • Gentings</p>
-        </div>
-      </div>
-
-      <!-- Live status pulse -->
-      <div class="flex items-center space-x-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-xs">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span id="market-status-text" class="text-[11px] text-slate-300 font-medium">Market Live</span>
-      </div>
-    </div>
+  <header>
+    <h1>马股核心观察仓</h1>
+    <span class="status-tag" id="last-update">数据加载中...</span>
   </header>
 
-  <!-- Top Ticker Carousel -->
-  <section class="border-b border-slate-800/60 bg-slate-900/40 py-2">
-    <div class="max-w-4xl mx-auto px-4">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
-        {
-          "symbols": [
-            { "proName": "MYX:TOPGLOV", "title": "7113 TOPGLOV" },
-            { "proName": "MYX:TANCO", "title": "2429 TANCO" },
-            { "proName": "MYX:PBBANK", "title": "1295 PBBANK" },
-            { "proName": "MYX:GENTING", "title": "3182 GENTING" },
-            { "proName": "MYX:GENM", "title": "4715 GENM" }
-          ],
-          "isTransparent": true,
-          "showSymbolLogo": true,
-          "colorTheme": "dark",
-          "locale": "en"
-        }
-        </script>
-      </div>
-    </div>
-  </section>
-
-  <!-- Main Container -->
-  <main class="max-w-4xl w-full mx-auto px-4 py-4 flex-1">
-    
-    <!-- View Mode Switcher -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex p-1 bg-slate-900 border border-slate-800 rounded-xl space-x-1">
-        <button id="btn-view-cards" onclick="switchView('cards')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-500 text-white shadow-sm flex items-center gap-1.5">
-          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-          <span>Cards View</span>
-        </button>
-        <button id="btn-view-chart" onclick="switchView('chart')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
-          <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
-          <span>Interactive Chart</span>
-        </button>
-      </div>
-
-      <div class="text-xs text-slate-400 flex items-center gap-1">
-        <i data-lucide="clock" class="w-3 h-3 text-slate-500"></i>
-        <span id="current-kl-time">--:--:-- MYT</span>
-      </div>
-    </div>
-
-    <!-- VIEW 1: All 5 Stocks with Mini Charts -->
-    <div id="view-cards-container" class="space-y-4">
-      
-      <!-- Quick stock selection buttons on mobile -->
-      <div class="flex overflow-x-auto pb-1 gap-2 custom-scrollbar text-xs">
-        <a href="#stock-7113" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg whitespace-nowrap text-slate-300 hover:border-sky-500/50">
-          <span class="font-bold text-sky-400">7113</span> Top Glove
-        </a>
-        <a href="#stock-2429" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg whitespace-nowrap text-slate-300 hover:border-sky-500/50">
-          <span class="font-bold text-sky-400">2429</span> Tanco
-        </a>
-        <a href="#stock-1295" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg whitespace-nowrap text-slate-300 hover:border-sky-500/50">
-          <span class="font-bold text-sky-400">1295</span> PBBank
-        </a>
-        <a href="#stock-3182" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg whitespace-nowrap text-slate-300 hover:border-sky-500/50">
-          <span class="font-bold text-sky-400">3182</span> Genting
-        </a>
-        <a href="#stock-4715" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg whitespace-nowrap text-slate-300 hover:border-sky-500/50">
-          <span class="font-bold text-sky-400">4715</span> GenM
-        </a>
-      </div>
-
-      <!-- 7113 - TOPGLOV -->
-      <div id="stock-7113" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg hover:border-slate-700 transition">
-        <div class="flex justify-between items-center mb-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">7113</span>
-              <h2 class="font-bold text-base text-white">TOP GLOVE CORPORATION</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Healthcare • Rubber & Latex Gloves</p>
-          </div>
-          <button onclick="loadDirectChart('MYX:TOPGLOV')" class="text-xs text-sky-400 bg-sky-950/60 border border-sky-800/60 px-2 py-1 rounded-md hover:bg-sky-900">
-            Full Chart &rarr;
-          </button>
-        </div>
-        <div class="h-44 sm:h-52 w-full overflow-hidden rounded-xl bg-slate-950">
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-            {
-              "symbol": "MYX:TOPGLOV",
-              "width": "100%",
-              "height": "100%",
-              "locale": "en",
-              "dateRange": "1D",
-              "colorTheme": "dark",
-              "isTransparent": true,
-              "autosize": true,
-              "largeChartUrl": ""
-            }
-            </script>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2429 - TANCO -->
-      <div id="stock-2429" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg hover:border-slate-700 transition">
-        <div class="flex justify-between items-center mb-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">2429</span>
-              <h2 class="font-bold text-base text-white">TANCO HOLDINGS BERHAD</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Property & Infrastructure Development</p>
-          </div>
-          <button onclick="loadDirectChart('MYX:TANCO')" class="text-xs text-sky-400 bg-sky-950/60 border border-sky-800/60 px-2 py-1 rounded-md hover:bg-sky-900">
-            Full Chart &rarr;
-          </button>
-        </div>
-        <div class="h-44 sm:h-52 w-full overflow-hidden rounded-xl bg-slate-950">
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-            {
-              "symbol": "MYX:TANCO",
-              "width": "100%",
-              "height": "100%",
-              "locale": "en",
-              "dateRange": "1D",
-              "colorTheme": "dark",
-              "isTransparent": true,
-              "autosize": true,
-              "largeChartUrl": ""
-            }
-            </script>
-          </div>
-        </div>
-      </div>
-
-      <!-- 1295 - PBBANK -->
-      <div id="stock-1295" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg hover:border-slate-700 transition">
-        <div class="flex justify-between items-center mb-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">1295</span>
-              <h2 class="font-bold text-base text-white">PUBLIC BANK BERHAD</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Financial Services • Banking Bluechip</p>
-          </div>
-          <button onclick="loadDirectChart('MYX:PBBANK')" class="text-xs text-sky-400 bg-sky-950/60 border border-sky-800/60 px-2 py-1 rounded-md hover:bg-sky-900">
-            Full Chart &rarr;
-          </button>
-        </div>
-        <div class="h-44 sm:h-52 w-full overflow-hidden rounded-xl bg-slate-950">
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-            {
-              "symbol": "MYX:PBBANK",
-              "width": "100%",
-              "height": "100%",
-              "locale": "en",
-              "dateRange": "1D",
-              "colorTheme": "dark",
-              "isTransparent": true,
-              "autosize": true,
-              "largeChartUrl": ""
-            }
-            </script>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3182 - GENTING -->
-      <div id="stock-3182" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg hover:border-slate-700 transition">
-        <div class="flex justify-between items-center mb-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">3182</span>
-              <h2 class="font-bold text-base text-white">GENTING BERHAD</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Conglomerates • Gaming & Leisure Holding</p>
-          </div>
-          <button onclick="loadDirectChart('MYX:GENTING')" class="text-xs text-sky-400 bg-sky-950/60 border border-sky-800/60 px-2 py-1 rounded-md hover:bg-sky-900">
-            Full Chart &rarr;
-          </button>
-        </div>
-        <div class="h-44 sm:h-52 w-full overflow-hidden rounded-xl bg-slate-950">
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-            {
-              "symbol": "MYX:GENTING",
-              "width": "100%",
-              "height": "100%",
-              "locale": "en",
-              "dateRange": "1D",
-              "colorTheme": "dark",
-              "isTransparent": true,
-              "autosize": true,
-              "largeChartUrl": ""
-            }
-            </script>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4715 - GENM -->
-      <div id="stock-4715" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg hover:border-slate-700 transition">
-        <div class="flex justify-between items-center mb-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">4715</span>
-              <h2 class="font-bold text-base text-white">GENTING MALAYSIA BERHAD</h2>
-            </div>
-            <p class="text-xs text-slate-400 mt-0.5">Hotels & Resorts • Highlands Casino & Theme Park</p>
-          </div>
-          <button onclick="loadDirectChart('MYX:GENM')" class="text-xs text-sky-400 bg-sky-950/60 border border-sky-800/60 px-2 py-1 rounded-md hover:bg-sky-900">
-            Full Chart &rarr;
-          </button>
-        </div>
-        <div class="h-44 sm:h-52 w-full overflow-hidden rounded-xl bg-slate-950">
-          <div class="tradingview-widget-container" style="height:100%;width:100%">
-            <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-            {
-              "symbol": "MYX:GENM",
-              "width": "100%",
-              "height": "100%",
-              "locale": "en",
-              "dateRange": "1D",
-              "colorTheme": "dark",
-              "isTransparent": true,
-              "autosize": true,
-              "largeChartUrl": ""
-            }
-            </script>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- VIEW 2: Interactive In-Depth Technical Chart View -->
-    <div id="view-chart-container" class="hidden space-y-3">
-      <!-- Selector for the 5 target stocks -->
-      <div class="flex flex-wrap gap-2 p-2 bg-slate-900/90 border border-slate-800 rounded-xl">
-        <button onclick="renderAdvancedChart('MYX:TOPGLOV', this)" class="chart-tab-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-white">
-          7113 TOPGLOV
-        </button>
-        <button onclick="renderAdvancedChart('MYX:TANCO', this)" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white">
-          2429 TANCO
-        </button>
-        <button onclick="renderAdvancedChart('MYX:PBBANK', this)" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white">
-          1295 PBBANK
-        </button>
-        <button onclick="renderAdvancedChart('MYX:GENTING', this)" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white">
-          3182 GENTING
-        </button>
-        <button onclick="renderAdvancedChart('MYX:GENM', this)" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white">
-          4715 GENM
-        </button>
-      </div>
-
-      <!-- Advanced TradingView chart wrapper -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl h-[520px] sm:h-[600px] w-full" id="advanced-chart-box">
-        <!-- Replaced dynamically by JS -->
-      </div>
-    </div>
-
-  </main>
-
-  <!-- Bottom Quick Bar for Mobile -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-6 py-2.5 flex justify-around items-center max-w-md mx-auto sm:rounded-t-2xl">
-    <button onclick="switchView('cards')" class="flex flex-col items-center text-sky-400">
-      <i data-lucide="layers" class="w-5 h-5"></i>
-      <span class="text-[10px] mt-1 font-medium">Watchlist</span>
-    </button>
-    <button onclick="switchView('chart')" class="flex flex-col items-center text-slate-400 hover:text-white">
-      <i data-lucide="candlestick-chart" class="w-5 h-5"></i>
-      <span class="text-[10px] mt-1 font-medium">Pro Chart</span>
-    </button>
-    <button onclick="openInfoModal()" class="flex flex-col items-center text-slate-400 hover:text-white">
-      <i data-lucide="help-circle" class="w-5 h-5"></i>
-      <span class="text-[10px] mt-1 font-medium">Setup Guide</span>
-    </button>
-  </nav>
-
-  <!-- Setup & Help Modal -->
-  <div id="info-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4">
-      <div class="flex justify-between items-center">
-        <h3 class="font-bold text-white text-base flex items-center gap-2">
-          <i data-lucide="smartphone" class="w-4 h-4 text-sky-400"></i>
-          Phone Home Screen Setup
-        </h3>
-        <button onclick="closeInfoModal()" class="text-slate-400 hover:text-white p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="text-xs text-slate-300 space-y-2.5 leading-relaxed">
-        <p class="font-semibold text-sky-300">How to use it like an App on your phone:</p>
-        <ol class="list-decimal list-inside space-y-1.5 text-slate-400">
-          <li>Deploy this to your <b class="text-white">GitHub Pages</b> URL.</li>
-          <li>Open the URL on your mobile (Safari on iOS or Chrome on Android).</li>
-          <li>Tap the <b class="text-white">Share / Options (⋯)</b> button.</li>
-          <li>Select <b class="text-emerald-400">"Add to Home Screen"</b>.</li>
-          <li>Now it opens like a standalone stock tracking app!</li>
-        </ol>
-
-        <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-[11px] text-slate-400">
-          💡 <span class="text-slate-300">Market Hours (MYT):</span> Morning 09:00 - 12:30 | Afternoon 14:30 - 17:00 (Mon - Fri).
-        </div>
-      </div>
-
-      <button onclick="closeInfoModal()" class="w-full py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl text-xs transition">
-        Got it!
-      </button>
-    </div>
+  <div class="stock-grid" id="stockList">
+    <!-- 股票列表动态渲染 -->
   </div>
 
+  <div class="footer">每 30 秒自动刷新 | 数据源：马交所实时聚合</div>
+
   <script>
-    // Initialize icons
-    lucide.createIcons();
+    const STOCKS = [
+      { code: "7113", ticker: "7113.KL", name: "顶级手套 (TOPGLOV)", desc: "医疗保健 · 橡胶手套" },
+      { code: "2429", ticker: "2429.KL", name: "丹斯里陈志成机构 (TANCO)", desc: "房地产与基建开发" },
+      { code: "1295", ticker: "1295.KL", name: "大众银行 (PBBANK)", desc: "金融服务 · 商业银行" },
+      { code: "3182", ticker: "3182.KL", name: "云顶 (GENTING)", desc: "综合控股 · 休闲娱乐" },
+      { code: "4715", ticker: "4715.KL", name: "云顶大马 (GENM)", desc: "旅游度假村 · 赌场与酒店" }
+    ];
 
-    // KL Market Time and Status Tracker
-    function updateClock() {
+    async function fetchQuote(ticker) {
+      try {
+        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+        const wrapper = await res.json();
+        const data = JSON.parse(wrapper.contents);
+        const meta = data.chart.result[0].meta;
+        
+        const price = meta.regularMarketPrice ?? 0;
+        const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
+        const diff = price - prevClose;
+        const percent = prevClose !== 0 ? (diff / prevClose) * 100 : 0;
+
+        return {
+          price: price.toFixed(3),
+          diff: diff.toFixed(3),
+          percent: percent.toFixed(2),
+          isUp: diff > 0,
+          isFlat: diff === 0
+        };
+      } catch (err) {
+        console.error("加载失败: " + ticker, err);
+        return null;
+      }
+    }
+
+    async function updateQuotes() {
+      const container = document.getElementById("stockList");
+      
+      const promises = STOCKS.map(async (item) => {
+        const quote = await fetchQuote(item.ticker);
+        return { ...item, quote };
+      });
+
+      const results = await Promise.all(promises);
+      container.innerHTML = "";
+
+      results.forEach(stock => {
+        const q = stock.quote;
+        const isUp = q ? q.isUp : false;
+        const isFlat = q ? q.isFlat : true;
+        
+        const changeClass = isFlat ? 'flat' : (isUp ? 'up' : 'down');
+        const sign = isFlat ? '' : (isUp ? '+' : '');
+        const priceText = q ? `RM ${q.price}` : "--";
+        const changeText = q ? `${sign}${q.diff} (${sign}${q.percent}%)` : "获取中";
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="stock-info">
+            <div class="name">
+              <span class="code-badge">${stock.code}</span>
+              ${stock.name}
+            </div>
+            <div class="category">${stock.desc}</div>
+          </div>
+          <div class="stock-price">
+            <div class="price-value">${priceText}</div>
+            <div class="change-badge ${changeClass}">${changeText}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
       const now = new Date();
-      // Format to Malaysia Time (GMT+8)
-      const options = {
-        timeZone: 'Asia/Kuala_Lumpur',
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      };
-      const timeStr = now.toLocaleTimeString('en-GB', options);
-      const clockElem = document.getElementById('current-kl-time');
-      if (clockElem) {
-        clockElem.textContent = timeStr + ' MYT';
-      }
-
-      // Bursa session check: Mon(1) to Fri(5), 9:00-12:30 and 14:30-17:00
-      const day = now.getDay();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const timeNum = hours * 100 + minutes;
-
-      const isWeekday = day >= 1 && day <= 5;
-      const isMorningSession = timeNum >= 900 && timeNum < 1230;
-      const isAfternoonSession = timeNum >= 1430 && timeNum < 1700;
-
-      const statusElem = document.getElementById('market-status-text');
-      if (isWeekday && (isMorningSession || isAfternoonSession)) {
-        statusElem.textContent = "Market Open";
-        statusElem.className = "text-[11px] text-emerald-400 font-medium";
-      } else {
-        statusElem.textContent = "Market Closed";
-        statusElem.className = "text-[11px] text-slate-400 font-medium";
-      }
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // View toggling (Cards vs Full Interactive Chart)
-    function switchView(mode) {
-      const cardsView = document.getElementById('view-cards-container');
-      const chartView = document.getElementById('view-chart-container');
-      const btnCards = document.getElementById('btn-view-cards');
-      const btnChart = document.getElementById('btn-view-chart');
-
-      if (mode === 'cards') {
-        cardsView.classList.remove('hidden');
-        chartView.classList.add('hidden');
-
-        btnCards.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-500 text-white shadow-sm flex items-center gap-1.5";
-        btnChart.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5";
-      } else {
-        cardsView.classList.add('hidden');
-        chartView.classList.remove('hidden');
-
-        btnChart.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-sky-500 text-white shadow-sm flex items-center gap-1.5";
-        btnCards.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5";
-
-        // If advanced chart container is empty, render default TOPGLOV
-        const box = document.getElementById('advanced-chart-box');
-        if (!box.children.length) {
-          renderAdvancedChart('MYX:TOPGLOV');
-        }
-      }
+      const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+      document.getElementById("last-update").innerText = `最后更新：${timeStr}`;
     }
 
-    // Direct jump from a card to its full candlestick chart
-    function loadDirectChart(symbol) {
-      switchView('chart');
-      // Highlight the correct tab
-      const buttons = document.querySelectorAll('.chart-tab-btn');
-      buttons.forEach(b => {
-        if (b.getAttribute('onclick').includes(symbol)) {
-          b.className = "chart-tab-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-white";
-        } else {
-          b.className = "chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white";
-        }
-      });
-      renderAdvancedChart(symbol);
-    }
-
-    // Dynamic TV Advanced Real-time Chart Loader
-    function renderAdvancedChart(symbol, btnElement = null) {
-      if (btnElement) {
-        document.querySelectorAll('.chart-tab-btn').forEach(b => {
-          b.className = "chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white";
-        });
-        btnElement.className = "chart-tab-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-white";
-      }
-
-      const container = document.getElementById('advanced-chart-box');
-      container.innerHTML = `
-        <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div id="tradingview_advanced" style="height:100%;width:100%"></div>
-        </div>
-      `;
-
-      // Load TradingView TV Library dynamically
-      if (!window.TradingView) {
-        const script = document.createElement('script');
-        script.src = 'https://s3.tradingview.com/tv.js';
-        script.async = true;
-        script.onload = () => initWidget(symbol);
-        document.head.appendChild(script);
-      } else {
-        initWidget(symbol);
-      }
-    }
-
-    function initWidget(symbol) {
-      new TradingView.widget({
-        "autosize": true,
-        "symbol": symbol,
-        "interval": "D",
-        "timezone": "Asia/Kuala_Lumpur",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "enable_publishing": false,
-        "hide_side_toolbar": false,
-        "allow_symbol_change": true,
-        "container_id": "tradingview_advanced",
-        "hide_volume": false
-      });
-    }
-
-    // Modal controls
-    function openInfoModal() {
-      document.getElementById('info-modal').classList.remove('hidden');
-    }
-    function closeInfoModal() {
-      document.getElementById('info-modal').classList.add('hidden');
-    }
+    updateQuotes();
+    setInterval(updateQuotes, 30000);
   </script>
 </body>
 </html>
