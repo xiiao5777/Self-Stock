@@ -15,78 +15,79 @@
       color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
       padding: 16px;
-      max-width: 650px;
+      max-width: 500px;
       margin: 0 auto;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       padding-bottom: 12px;
       border-bottom: 1px solid #1e293b;
     }
     h1 {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: #38bdf8;
     }
     .badge {
       font-size: 0.75rem;
       background: #1e293b;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 9999px;
       color: #22c55e;
       border: 1px solid #334155;
     }
-    .widget-wrapper {
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid #334155;
-      background: #131d31;
-      padding: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    .legend-list {
-      margin-top: 18px;
+    .stock-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
-    .legend-item {
+    .stock-card {
       background: #131d31;
       border: 1px solid #1e293b;
-      border-radius: 10px;
-      padding: 12px 16px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 8px;
     }
-    .legend-title {
-      font-weight: 600;
+    .stock-title {
       font-size: 0.95rem;
-      color: #e2e8f0;
+      font-weight: 600;
+      color: #f1f5f9;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .code-pill {
       background: #0284c7;
-      color: #fff;
+      color: #ffffff;
       font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 4px;
-      font-weight: bold;
+      font-weight: 700;
     }
-    .legend-desc {
-      font-size: 0.8rem;
-      color: #94a3b8;
+    .stock-sector {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .widget-container {
+      width: 100%;
+      height: 104px;
+      overflow: hidden;
+      border-radius: 8px;
     }
     .footer {
       margin-top: 24px;
       text-align: center;
       font-size: 0.75rem;
-      color: #64748b;
+      color: #475569;
     }
   </style>
 </head>
@@ -94,71 +95,122 @@
 
   <header>
     <h1>馬股核心觀察倉</h1>
-    <span class="badge">● 連線正常</span>
+    <span class="badge">● 連線極速秒開</span>
   </header>
 
-  <!-- 官方即時報價卡片元件 -->
-  <div class="widget-wrapper">
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
-      {
-        "symbols": [
+  <div class="stock-list">
+    <!-- 7113 頂級手套 -->
+    <div class="stock-card">
+      <div class="card-header">
+        <div class="stock-title"><span class="code-pill">7113</span> 頂級手套 (TOPGLOV)</div>
+        <div class="stock-sector">醫療保健 · 手套</div>
+      </div>
+      <div class="widget-container">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
           {
-            "proName": "MYX:TOPGLOV",
-            "title": "7113 頂級手套"
-          },
-          {
-            "proName": "MYX:TANCO",
-            "title": "2429 丹斯里陳志成機構"
-          },
-          {
-            "proName": "MYX:PBBANK",
-            "title": "1295 大眾銀行"
-          },
-          {
-            "proName": "MYX:GENTING",
-            "title": "3182 雲頂"
-          },
-          {
-            "proName": "MYX:GENM",
-            "title": "4715 雲頂大馬"
+            "symbol": "MYX:TOPGLOV",
+            "width": "100%",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "locale": "zh_TW"
           }
-        ],
-        "isTransparent": true,
-        "showSymbolLogo": true,
-        "colorTheme": "dark",
-        "locale": "zh_TW"
-      }
-      </script>
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2429 丹斯里陳志成機構 -->
+    <div class="stock-card">
+      <div class="card-header">
+        <div class="stock-title"><span class="code-pill">2429</span> 丹斯里陳志成機構 (TANCO)</div>
+        <div class="stock-sector">房產基建 · 智慧港口</div>
+      </div>
+      <div class="widget-container">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+          {
+            "symbol": "MYX:TANCO",
+            "width": "100%",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "locale": "zh_TW"
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1295 大眾銀行 -->
+    <div class="stock-card">
+      <div class="card-header">
+        <div class="stock-title"><span class="code-pill">1295</span> 大眾銀行 (PBBANK)</div>
+        <div class="stock-sector">金融服務 · 商業銀行</div>
+      </div>
+      <div class="widget-container">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+          {
+            "symbol": "MYX:PBBANK",
+            "width": "100%",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "locale": "zh_TW"
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3182 雲頂 -->
+    <div class="stock-card">
+      <div class="card-header">
+        <div class="stock-title"><span class="code-pill">3182</span> 雲頂 (GENTING)</div>
+        <div class="stock-sector">綜合控股 · 跨國休閒</div>
+      </div>
+      <div class="widget-container">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+          {
+            "symbol": "MYX:GENTING",
+            "width": "100%",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "locale": "zh_TW"
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4715 雲頂大馬 -->
+    <div class="stock-card">
+      <div class="card-header">
+        <div class="stock-title"><span class="code-pill">4715</span> 雲頂大馬 (GENM)</div>
+        <div class="stock-sector">休閒娛樂 · 賭場度假村</div>
+      </div>
+      <div class="widget-container">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+          {
+            "symbol": "MYX:GENM",
+            "width": "100%",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "locale": "zh_TW"
+          }
+          </script>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 股票中文備註與行業分類 -->
-  <div class="legend-list">
-    <div class="legend-item">
-      <div class="legend-title"><span class="code-pill">7113</span> 頂級手套 (TOPGLOV)</div>
-      <div class="legend-desc">醫療保健 · 手套製造</div>
-    </div>
-    <div class="legend-item">
-      <div class="legend-title"><span class="code-pill">2429</span> 丹斯里陳志成機構 (TANCO)</div>
-      <div class="legend-desc">產業發展 · 港口基建</div>
-    </div>
-    <div class="legend-item">
-      <div class="legend-title"><span class="code-pill">1295</span> 大眾銀行 (PBBANK)</div>
-      <div class="legend-desc">金融服務 · 商業銀行</div>
-    </div>
-    <div class="legend-item">
-      <div class="legend-title"><span class="code-pill">3182</span> 雲頂 (GENTING)</div>
-      <div class="legend-desc">綜合控股 · 全球娛樂</div>
-    </div>
-    <div class="legend-item">
-      <div class="legend-title"><span class="code-pill">4715</span> 雲頂大馬 (GENM)</div>
-      <div class="legend-desc">休閒娛樂 · 賭場度假村</div>
-    </div>
-  </div>
-
-  <div class="footer">TradingView 官方數據直連 | 全華文支援</div>
+  <div class="footer">TradingView 官方直連 | 行情秒級載入</div>
 
 </body>
 </html>
